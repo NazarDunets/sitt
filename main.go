@@ -9,25 +9,41 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 	"ttit/command"
-	"ttit/timetable"
+	"ttit/storage"
 
 	_ "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	tt := timetable.New()
+	time := time.Now()
+	tt, err := storage.LoadOrCreateTimetable(time)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	fmt.Println(tt)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		input := scanner.Text()
 		entry, err := command.GenerateEntryFromCommand(input, tt.FilledUpTo())
-		if err == nil {
-			tt.Insert(*entry)
-			fmt.Println(tt)
-		} else {
+
+		if err != nil {
 			log.Println(err)
+			continue
 		}
+
+		tt.Insert(*entry)
+
+		if err := storage.Save(time, tt); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println(tt)
 	}
 }

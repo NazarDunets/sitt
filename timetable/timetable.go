@@ -8,13 +8,13 @@ import (
 type Minute int
 
 type Entry struct {
-	From Minute
-	To   Minute
-	Name string
+	From Minute `json:"from"`
+	To   Minute `json:"to"`
+	Name string `json:"name"`
 }
 
 type Timetable struct {
-	Entries []Entry
+	Entries []Entry `json:"entries"`
 }
 
 func (m Minute) String() string {
@@ -42,6 +42,10 @@ func (t Timetable) String() string {
 func (t *Timetable) Insert(newEntry Entry) {
 	newEntry.From = max(newEntry.From, 0)
 	newEntry.To = min(newEntry.To, 24*60)
+
+	if newEntry.To <= newEntry.From {
+		return
+	}
 
 	cropEnd := -1
 	cropStart := -1

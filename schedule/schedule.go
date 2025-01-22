@@ -1,4 +1,4 @@
-package timetable
+package schedule
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ type Entry struct {
 	Name string `json:"name"`
 }
 
-type Timetable struct {
+type Schedule struct {
 	Entries []Entry `json:"entries"`
 }
 
@@ -24,22 +24,56 @@ func (m Minute) String() string {
 	return fmt.Sprintf("%02d:%02d", hours, mins)
 }
 
-func (t Timetable) String() string {
+func (sdl Schedule) View() string {
 	var buffer bytes.Buffer
-	for _, entry := range t.Entries {
-		buffer.WriteString(entry.From.String())
-		buffer.WriteString("-")
-		buffer.WriteString(entry.To.String())
-		buffer.WriteString(" : ")
-		buffer.WriteString(" : ")
-		buffer.WriteString(entry.Name)
-		buffer.WriteString("\n")
+
+	if len(sdl.Entries) == 0 || len(sdl.Entries) == 1 && sdl.Entries[0].Name == "" {
+		return "Schedule is empty\n"
 	}
+
+	for i, entry := range sdl.Entries {
+		if i == 0 && entry.Name == "" {
+			continue
+		}
+
+		buffer.WriteString(entry.From.String())
+		buffer.WriteString(" : ")
+
+		name := entry.Name
+		if name == "" {
+			name = "---"
+		}
+		buffer.WriteString(name)
+
+		buffer.WriteString(" (")
+		buffer.WriteString(entry.durationString())
+		buffer.WriteString(")\n")
+	}
+
+	buffer.WriteString("24:00 : DAY END\n")
+
+	return buffer.String()
+}
+
+func (e Entry) durationString() string {
+	durationMinutes := e.To - e.From
+
+	hours := durationMinutes / 60
+	minutes := durationMinutes % 60
+
+	var buffer bytes.Buffer
+	if hours > 0 {
+		buffer.WriteString(fmt.Sprintf("%dh", hours))
+	}
+	if minutes > 0 {
+		buffer.WriteString(fmt.Sprintf("%dm", minutes))
+	}
+
 	return buffer.String()
 }
 
 // TODO: merge entries with same name?
-func (t *Timetable) Insert(newEntry Entry) {
+func (sdl *Schedule) Insert(newEntry Entry) {
 	newEntry.From = max(newEntry.From, 0)
 	newEntry.To = min(newEntry.To, 24*60)
 
@@ -52,7 +86,7 @@ func (t *Timetable) Insert(newEntry Entry) {
 	deleteFrom := -1
 	deleteToInclusive := -1
 
-	for i, entry := range t.Entries {
+	for i, entry := range sdl.Entries {
 		if entry.From >= newEntry.From && entry.To <= newEntry.To {
 			if deleteFrom == -1 {
 				deleteFrom = i
@@ -76,30 +110,30 @@ func (t *Timetable) Insert(newEntry Entry) {
 		splitIndex := cropEnd
 		newEntries := make([]Entry, 0)
 
-		newEntries = append(newEntries, t.Entries[:splitIndex]...)
+		newEntries = append(newEntries, sdl.Entries[:splitIndex]...)
 
-		entryToSplit := t.Entries[splitIndex]
+		entryToSplit := sdl.Entries[splitIndex]
 		entryToSplit.To = newEntry.From
 		newEntries = append(newEntries, entryToSplit)
 
 		newEntries = append(newEntries, newEntry)
 
-		entryToSplit = t.Entries[splitIndex]
+		entryToSplit = sdl.Entries[splitIndex]
 		entryToSplit.From = newEntry.To
 		newEntries = append(newEntries, entryToSplit)
 
-		newEntries = append(newEntries, t.Entries[splitIndex+1:]...)
-		t.Entries = newEntries
+		newEntries = append(newEntries, sdl.Entries[splitIndex+1:]...)
+		sdl.Entries = newEntries
 		return
 	}
 
 	if cropEnd != -1 {
-		toCrop := &(t.Entries[cropEnd])
+		toCrop := &(sdl.Entries[cropEnd])
 		toCrop.To = newEntry.From
 	}
 
 	if cropStart != -1 {
-		toCrop := &(t.Entries[cropStart])
+		toCrop := &(sdl.Entries[cropStart])
 		toCrop.From = newEntry.To
 	}
 
@@ -126,21 +160,21 @@ func (t *Timetable) Insert(newEntry Entry) {
 	// fmt.Printf("to: %d, from: %d\n", includeToInclusive, includeFromInclusive)
 
 	newEntries := make([]Entry, 0)
-	if includeToInclusive >= 0 && includeToInclusive < len(t.Entries) {
-		newEntries = append(newEntries, t.Entries[0:includeToInclusive+1]...)
+	if includeToInclusive >= 0 && includeToInclusive < len(sdl.Entries) {
+		newEntries = append(newEntries, sdl.Entries[0:includeToInclusive+1]...)
 	}
 
 	newEntries = append(newEntries, newEntry)
 
-	if includeFromInclusive >= 0 && includeFromInclusive < len(t.Entries) {
-		newEntries = append(newEntries, t.Entries[includeFromInclusive:len(t.Entries)]...)
+	if includeFromInclusive >= 0 && includeFromInclusive < len(sdl.Entries) {
+		newEntries = append(newEntries, sdl.Entries[includeFromInclusive:len(sdl.Entries)]...)
 	}
-	t.Entries = newEntries
+	sdl.Entries = newEntries
 }
 
-func (t *Timetable) FilledUpTo() Minute {
-	for i := len(t.Entries) - 1; i > 0; i-- {
-		entry := t.Entries[i]
+func (sdl *Schedule) FilledUpTo() Minute {
+	for i := len(sdl.Entries) - 1; i > 0; i-- {
+		entry := sdl.Entries[i]
 		if entry.Name != "" {
 			return entry.To
 		}
@@ -149,8 +183,8 @@ func (t *Timetable) FilledUpTo() Minute {
 	return Minute(0)
 }
 
-func New() Timetable {
-	return Timetable{
+func New() Schedule {
+	return Schedule{
 		Entries: []Entry{newEmptyEntry(Minute(0), Minute(24*60))},
 	}
 }

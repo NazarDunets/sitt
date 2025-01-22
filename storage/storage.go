@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 	"time"
-	"ttit/timetable"
+	sdl "ttit/schedule"
 )
 
 const (
@@ -15,22 +15,22 @@ const (
 	storageFolderName = "ttit-storage"
 )
 
-func LoadOrCreateTimetable(date time.Time) (*timetable.Timetable, error) {
+func LoadOrCreateSchedule(date time.Time) (*sdl.Schedule, error) {
 	filePath, err := getFileForDate(date)
 	if err != nil {
 		return nil, err
 	}
 
-	if tt, err := parseTimetable(filePath); err == nil {
-		return tt, nil
+	if s, err := parseSchedule(filePath); err == nil {
+		return s, nil
 	}
 
-	// file doesn't exists or is corrupted, return empty timetable
-	tt := timetable.New()
-	return &tt, nil
+	// file doesn't exists or is corrupted, return empty schedule
+	s := sdl.New()
+	return &s, nil
 }
 
-func Save(date time.Time, tt *timetable.Timetable) error {
+func Save(date time.Time, tt *sdl.Schedule) error {
 	filePath, err := getFileForDate(date)
 	if err != nil {
 		return err
@@ -47,22 +47,22 @@ func Save(date time.Time, tt *timetable.Timetable) error {
 	return err
 }
 
-func parseTimetable(path string) (*timetable.Timetable, error) {
+func parseSchedule(path string) (*sdl.Schedule, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var tt timetable.Timetable
+	var s sdl.Schedule
 
 	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&tt)
+	err = decoder.Decode(&s)
 	if err != nil {
 		return nil, err
 	}
 
-	return &tt, nil
+	return &s, nil
 }
 
 func getFileForDate(date time.Time) (string, error) {

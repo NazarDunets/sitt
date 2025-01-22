@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	tt "ttit/timetable"
+	sdl "ttit/schedule"
 )
 
 type CmdPart struct {
@@ -57,7 +57,7 @@ var (
 	}
 )
 
-func GenerateEntryFromCommand(command string, thenMinutes tt.Minute) (*tt.Entry, error) {
+func GenerateEntryFromCommand(command string, thenMinutes sdl.Minute) (*sdl.Entry, error) {
 	tokens := strings.Fields(command)
 	parts, err := parseCommand(tokens)
 
@@ -65,7 +65,7 @@ func GenerateEntryFromCommand(command string, thenMinutes tt.Minute) (*tt.Entry,
 		return nil, err
 	}
 
-	entry := new(tt.Entry)
+	entry := new(sdl.Entry)
 
 	nameFound := false
 	startTimeFound := false
@@ -114,7 +114,7 @@ func GenerateEntryFromCommand(command string, thenMinutes tt.Minute) (*tt.Entry,
 				return nil, errors.New("expected start time")
 			}
 
-			entry.From = fromTime.Value.(tt.Minute)
+			entry.From = fromTime.Value.(sdl.Minute)
 			startTimeFound = true
 
 			parts = parts[2:]
@@ -132,7 +132,7 @@ func GenerateEntryFromCommand(command string, thenMinutes tt.Minute) (*tt.Entry,
 				if duration.Type != CptDuration {
 					return nil, invalidCommandError()
 				}
-				entry.To = entry.From + duration.Value.(tt.Minute)
+				entry.To = entry.From + duration.Value.(sdl.Minute)
 				endTimeFound = true
 
 			case kwd.isKeyword(KwdUntil) || kwd.isKeyword(KwdTo):
@@ -140,7 +140,7 @@ func GenerateEntryFromCommand(command string, thenMinutes tt.Minute) (*tt.Entry,
 				if time.Type != CptTime {
 					return nil, invalidCommandError()
 				}
-				entry.To = time.Value.(tt.Minute)
+				entry.To = time.Value.(sdl.Minute)
 				endTimeFound = true
 
 			default:
@@ -218,6 +218,7 @@ func parseKeyword(tokens []string) (*CmdPart, int, error) {
 	return &CmdPart{Type: CptKeyword, Value: Keyword(token)}, 1, nil
 }
 
+// TODO: support "now"
 func parseTime(tokens []string) (*CmdPart, int, error) {
 	if len(tokens) < 1 {
 		return parseResultTooShort()
@@ -248,7 +249,7 @@ func parseDuration(tokens []string) (*CmdPart, int, error) {
 	return &CmdPart{Type: CptDuration, Value: minutes}, 1, nil
 }
 
-func minutesFromDurationString(token string) (tt.Minute, error) {
+func minutesFromDurationString(token string) (sdl.Minute, error) {
 	var err error
 	hours := 0
 	minutes := 0
@@ -280,10 +281,10 @@ func minutesFromDurationString(token string) (tt.Minute, error) {
 		return 0, invalidDurationError(token)
 	}
 
-	return minFromHour(hours) + tt.Minute(minutes), nil
+	return minFromHour(hours) + sdl.Minute(minutes), nil
 }
 
-func minutesFromTimeString(token string) (tt.Minute, error) {
+func minutesFromTimeString(token string) (sdl.Minute, error) {
 	switch len(token) {
 	case 1, 2:
 		hours, err := strconv.Atoi(token)
@@ -316,7 +317,7 @@ func minutesFromTimeString(token string) (tt.Minute, error) {
 			return 0, invalidTimeError(token)
 		}
 
-		return minFromHour(hours) + tt.Minute(minutes), nil
+		return minFromHour(hours) + sdl.Minute(minutes), nil
 	default:
 		return 0, invalidTimeError(token)
 	}
@@ -346,6 +347,6 @@ func invalidDurationError(got string) error {
 	return errors.New(fmt.Sprintf("expected time in format {X}h{Y}m/{X}h/{X}m. Got %s", got))
 }
 
-func minFromHour(hours int) tt.Minute {
-	return tt.Minute(hours * 60)
+func minFromHour(hours int) sdl.Minute {
+	return sdl.Minute(hours * 60)
 }

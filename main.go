@@ -1,49 +1,105 @@
 package main
 
-// These imports will be used later on the tutorial. If you save the file
-// now, Go might complain they are unused, but that's fine.
-// You may also need to run `go mod tidy` to download bubbletea and its
-// dependencies.
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"time"
 	"ttit/command"
+	sdl "ttit/schedule"
 	"ttit/storage"
 
-	_ "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 )
+
+type model struct {
+	schedule   *sdl.Schedule
+	input      textinput.Model
+	date       time.Time
+	dateString string
+	err        error
+}
 
 func main() {
 	time := time.Now()
-	tt, err := storage.LoadOrCreateTimetable(time)
+	schedule, err := storage.LoadOrCreateSchedule(time)
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fmt.Println(tt)
+	p := tea.NewProgram(initialModel(schedule))
+	if _, err := p.Run(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		input := scanner.Text()
-		entry, err := command.GenerateEntryFromCommand(input, tt.FilledUpTo())
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 
-		if err != nil {
-			log.Println(err)
-			continue
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyEnter:
+			m.err = nil
+			entry, err := command.GenerateEntryFromCommand(m.input.Value(), m.schedule.FilledUpTo())
+
+			if err == nil {
+				m.schedule.Insert(*entry)
+				m.err = storage.Save(m.date, m.schedule)
+			} else {
+				m.err = err
+			}
+
+			m.input.SetValue("")
+			return m, nil
+		case tea.KeyCtrlC, tea.KeyEsc:
+			return m, tea.Quit
 		}
+	}
 
-		tt.Insert(*entry)
+	m.input, cmd = m.input.Update(msg)
+	return m, cmd
+}
 
-		if err := storage.Save(time, tt); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+func (m model) View() string {
+	s := "TTIT v0\n"
+	s += m.dateString
+	s += "\n\n"
 
-		fmt.Println(tt)
+	if m.err != nil {
+		s += "ERROR: "
+		s += m.err.Error()
+		s += "\n\n"
+	}
+
+	s += m.schedule.View()
+	s += "\n"
+	s += m.input.View()
+
+	return s
+}
+
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
+}
+
+func initialModel(schedule *sdl.Schedule) model {
+	ti := textinput.New()
+	ti.Placeholder = ""
+	ti.Focus()
+	ti.CharLimit = 100
+	ti.Width = 100
+
+	date := time.Now()
+	dateString := date.Format("2006-01-02")
+
+	return model{
+		schedule:   schedule,
+		input:      ti,
+		date:       date,
+		dateString: dateString,
 	}
 }

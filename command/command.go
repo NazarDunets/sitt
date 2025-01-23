@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	sdl "ttit/schedule"
 )
 
@@ -38,7 +39,10 @@ const (
 	CptDuration CmdPartType = "duration"
 )
 
-const NameClear = "clear"
+const (
+	NameClear = "clear"
+	TimeNow   = "now"
+)
 
 var (
 	keywords = map[Keyword]bool{
@@ -218,13 +222,17 @@ func parseKeyword(tokens []string) (*CmdPart, int, error) {
 	return &CmdPart{Type: CptKeyword, Value: Keyword(token)}, 1, nil
 }
 
-// TODO: support "now"
 func parseTime(tokens []string) (*CmdPart, int, error) {
 	if len(tokens) < 1 {
 		return parseResultTooShort()
 	}
 
 	token := tokens[0]
+
+	if token == TimeNow {
+		token = time.Now().Format("15:04")
+	}
+
 	minutes, err := minutesFromTimeString(token)
 
 	if err != nil {

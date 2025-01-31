@@ -13,7 +13,7 @@ import (
 const (
 	fileDateFormat    = "2006-01-02"
 	fileExtension     = "json"
-	storageFolderName = "ttit-storage"
+	storageFolderName = "sitt-storage"
 )
 
 func LoadOrCreateSchedule(date time.Time) (*sdl.Schedule, error) {

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	sdl "ttit/schedule"
+
+	sdl "github.com/NazarDunets/sitt/schedule"
 )
 
 func TestGeneratEntryFromCommand(t *testing.T) {

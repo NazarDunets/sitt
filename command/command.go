@@ -10,7 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	sdl "ttit/schedule"
+
+	sdl "github.com/NazarDunets/sitt/schedule"
 )
 
 type CmdPart struct {

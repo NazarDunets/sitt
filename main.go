@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 	"time"
-	"ttit/command"
-	sdl "ttit/schedule"
-	"ttit/storage"
+
+	"github.com/NazarDunets/sitt/command"
+	sdl "github.com/NazarDunets/sitt/schedule"
+	"github.com/NazarDunets/sitt/storage"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -65,7 +66,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "TTIT v0\n"
+	s := "SITT v0\n"
 	s += m.dateString
 	s += "\n\n"
 

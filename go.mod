@@ -1,4 +1,4 @@
-module ttit
+module github.com/NazarDunets/sitt
 
 go 1.23.2
 

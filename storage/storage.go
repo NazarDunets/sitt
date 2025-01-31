@@ -6,7 +6,8 @@ import (
 	"os"
 	"path"
 	"time"
-	sdl "ttit/schedule"
+
+	sdl "github.com/NazarDunets/sitt/schedule"
 )
 
 const (

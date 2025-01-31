@@ -4,6 +4,9 @@ Abbreviation for 'schedule in the terminal', very poetic.
 ## What's SITT
 I like to start my day with some planning. Nothing extreme, just approximate strcuture of the day + some events that are actually scheduled for specific time (if present). While there's probably a bazillion of solutions for such task, I wanted to build my own. And I did. SITT is a cli app for scheduling with syntax close to natural language.
 
+## Demo
+![demo](demo/demo.gif "demo")
+
 ## Usage
 
 Create an entry with following syntax:
@@ -24,6 +27,8 @@ then work until 13
 then {NAME} for {DURATION}
 then work for 1h45m
 ```
+
+You can quit the app with ESC or CTRL+C.
 
 ### Time/Duration
 Specific time should be specified in the following format `{HOUR}:{MINUTE}`, where minutes part is optional. Trailing zeros are also optional. Examples of valid time:
